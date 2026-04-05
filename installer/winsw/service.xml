@@ -1,0 +1,11 @@
+<service>
+    <id>winget-automatic</id>
+    <name>Winget Automatic Service</name>
+    <description>Automatically install program updates using Winget.</description>
+    <executable>powershell</executable>
+    <arguments>./WingetService.ps1</arguments>
+    <log mode="roll-by-size">
+        <sizeThreshold>10240</sizeThreshold> <!-- 10 MB -->
+        <keepFiles>8</keepFiles>
+    </log>
+</service>
