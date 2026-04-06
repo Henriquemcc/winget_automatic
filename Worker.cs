@@ -6,47 +6,57 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        try
+        while (!stoppingToken.IsCancellationRequested)
         {
-            // Finding Winget on the System
-            Console.WriteLine("INFO: Finding WinGet on the system...");
-            string wingetPath = GetWingetPath();
-            if (string.IsNullOrEmpty(wingetPath))
+            try
             {
-                Console.WriteLine("ERROR: WinGet not found on the system.");
-                return;
+                logger.LogInformation("Finding WinGet on the system...");
+                string? wingetPath = GetWingetPath();
+                
+                if (string.IsNullOrEmpty(wingetPath))
+                {
+                    logger.LogError("WinGet not found on the system.");
+                }
+                else
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo
+                    {
+                        FileName = wingetPath,
+                        Arguments = "upgrade --all --silent --accept-source-agreements --accept-package-agreements",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    logger.LogInformation("Applying updates...");
+                    using (Process? process = Process.Start(startInfo))
+                    {
+                        if (process != null)
+                        {
+                            // Using Task to avoid blocking the service main thread
+                            string output = await process.StandardOutput.ReadToEndAsync(stoppingToken);
+                            await process.WaitForExitAsync(stoppingToken);
+
+                            logger.LogInformation("Winget Output: {Output}", output);
+                            logger.LogInformation("Updates applied.");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error applying updates.");
             }
 
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = wingetPath,
-                Arguments = "upgrade --all --silent --accept-source-agreements --accept-package-agreements",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            // Applying updates
-            Console.WriteLine("INFO: Applying updates...");
-            using (Process process = Process.Start(startInfo))
-            {
-                // Prints the output in real time
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
-                Console.WriteLine(output);
-                Console.WriteLine("INFO: Updates applied.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ERROR: Error applying updates: {ex.Message}");
+            // Important: The service must wait a period of time, otherwise it will run in infinite loop consuming CPU
+            // or will end immediately, which would cause error in the MSI.
+            await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
         }
     }
 
     // Try to find Winget command line on the system
-    static string? GetWingetPath()
+    private string? GetWingetPath()
     {
         string? wingetPath = null;
 
