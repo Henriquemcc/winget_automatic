@@ -1,0 +1,36 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10'
+
+      - name: Generate installation package for Windows
+        working-directory: installer
+        run: powershell.exe -File .\Build.ps1 -Version ${{ github.ref_name }}
+        
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: installer/bin/x86/Debug/WingetAutomatic.msi
+          draft: false
+          prerelease: false
+          generate_release_notes: true
