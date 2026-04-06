@@ -9,7 +9,7 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
         try
         {
             // Finding Winget on the System
-            Console.WindowLeft("INFO: Finding WinGet on the system...");
+            Console.WriteLine("INFO: Finding WinGet on the system...");
             string wingetPath = GetWingetPath();
             if (string.IsNullOrEmpty(wingetPath))
             {
@@ -28,7 +28,7 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
             };
 
             // Applying updates
-            Console.WindowLeft("INFO: Applying updates...");
+            Console.WriteLine("INFO: Applying updates...");
             using (Process process = Process.Start(startInfo))
             {
                 // Prints the output in real time
