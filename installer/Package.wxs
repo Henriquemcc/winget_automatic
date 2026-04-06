@@ -10,50 +10,32 @@
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="Main">
-      <ComponentRef Id="AppComponent_Ps1" />
-      <ComponentRef Id="AppComponent_Xml" />
       <ComponentRef Id="ServiceComponent_x64" />
       <ComponentRef Id="ServiceComponent_x86" />
     </Feature>
   </Package>
 
   <Fragment>
-    <!-- Use ProgramFilesFolder with a 32-bit package to correctly target 
-         C:\Program Files (x86) on 64-bit systems and C:\Program Files on 32-bit systems -->
     <StandardDirectory Id="ProgramFilesFolder">
       <Directory Id="INSTALLFOLDER" Name="Winget Automatic" />
     </StandardDirectory>
   </Fragment>
 
   <Fragment>
-    <!-- Component for the application JAR file -->
-    <Component Id="AppComponent_Ps1" Directory="INSTALLFOLDER">
-      <File Source="installer-stage\WingetService.ps1" />
-      <RemoveFile Id="RemovePs1" Name="WingetService.ps1" On="uninstall" />
-    </Component>
-
-    <!-- Component for the WinSW XML configuration file -->
-    <Component Id="AppComponent_Xml" Directory="INSTALLFOLDER">
-      <File Source="installer-stage\service.xml" />
-      <RemoveFile Id="RemoveXml" Name="service.xml" On="uninstall" />
-    </Component>
-  </Fragment>
-
-  <Fragment>
     <!-- Component for the 64-bit service executable. Installs only on 64-bit Windows. -->
     <Component Id="ServiceComponent_x64" Directory="INSTALLFOLDER" Condition="VersionNT64">
-      <File Id="ServiceExecutable_x64" Source="installer-stage\service-x64.exe" Name="service.exe" KeyPath="yes" />
-      <ServiceInstall Id="ServiceInstaller_x64" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically install program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
+      <File Id="ServiceExecutable_x64" Source="installer-stage\winget_automatic_x64.exe" Name="winget_automatic.exe" KeyPath="yes" />
+      <ServiceInstall Id="ServiceInstaller_x64" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically installs program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
       <ServiceControl Id="ServiceControl_x64" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="no" />
-      <RemoveFile Id="RemoveServiceExe_x64" Name="service.exe" On="uninstall" />
+      <RemoveFile Id="RemoveServiceExe_x64" Name="winget_automatic.exe" On="uninstall" />
     </Component>
 
     <!-- Component for the 32-bit service executable. Installs only on 32-bit Windows. -->
     <Component Id="ServiceComponent_x86" Directory="INSTALLFOLDER" Condition="NOT VersionNT64">
-      <File Id="ServiceExecutable_x86" Source="installer-stage\service-x86.exe" Name="service.exe" KeyPath="yes" />
-      <ServiceInstall Id="ServiceInstaller_x86" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically install program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
+      <File Id="ServiceExecutable_x86" Source="installer-stage\winget_automatic_x86.exe" Name="winget_automatic.exe" KeyPath="yes" />
+      <ServiceInstall Id="ServiceInstaller_x86" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically installs program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
       <ServiceControl Id="ServiceControl_x86" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="no" />
-      <RemoveFile Id="RemoveServiceExe_x86" Name="service.exe" On="uninstall" />
+      <RemoveFile Id="RemoveServiceExe_x86" Name="winget_automatic.exe" On="uninstall" />
     </Component>
   </Fragment>
 </Wix>
