@@ -26,7 +26,7 @@
     <Component Id="ServiceComponent_x64" Directory="INSTALLFOLDER" Condition="VersionNT64">
       <File Id="ServiceExecutable_x64" Source="installer-stage\winget_automatic_x64.exe" Name="winget_automatic.exe" KeyPath="yes" />
       <ServiceInstall Id="ServiceInstaller_x64" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically installs program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
-      <ServiceControl Id="ServiceControl_x64" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="no" />
+      <ServiceControl Id="ServiceControl_x64" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
       <RemoveFile Id="RemoveServiceExe_x64" Name="winget_automatic.exe" On="uninstall" />
     </Component>
 
@@ -34,7 +34,7 @@
     <Component Id="ServiceComponent_x86" Directory="INSTALLFOLDER" Condition="NOT VersionNT64">
       <File Id="ServiceExecutable_x86" Source="installer-stage\winget_automatic_x86.exe" Name="winget_automatic.exe" KeyPath="yes" />
       <ServiceInstall Id="ServiceInstaller_x86" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically installs program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
-      <ServiceControl Id="ServiceControl_x86" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="no" />
+      <ServiceControl Id="ServiceControl_x86" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
       <RemoveFile Id="RemoveServiceExe_x86" Name="winget_automatic.exe" On="uninstall" />
     </Component>
   </Fragment>
