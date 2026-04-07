@@ -4,11 +4,11 @@ namespace WingetAutomatic.Model;
 
 public class Configuration
 {
-    TimeSpan updateInterval = TimeSpan.FromDays(1);
-    List<String> ignoredPackages = new List<string>();
-    RebootPolicy rebootPolicy = RebootPolicy.Never;
-    bool ignoreSecurityHash = false;
-    bool ignoreMalwareScan = false;
-    string? downloadProxy = null;
-    bool disableProxy = false;
+    public TimeSpan updateInterval = TimeSpan.FromDays(1);
+    public List<String> ignoredPackages = new List<string>();
+    public RebootPolicy rebootPolicy = RebootPolicy.Never;
+    public bool ignoreSecurityHash = false;
+    public bool ignoreMalwareScan = false;
+    public string? downloadProxy = null;
+    public bool disableProxy = false;
 }
