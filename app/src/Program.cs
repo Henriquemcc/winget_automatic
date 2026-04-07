@@ -3,10 +3,11 @@ using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Logging.EventLog;
 using WingetAutomatic.Model;
 using WingetAutomatic.Util;
+using WingetAutomatic.Repository;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddSingleton<Winget>();
-builder.Services.AddSingleton<ConfigurationRepositoryImpl>();
+builder.Services.AddSingleton<ConfigurationRepository, ConfigurationRepositoryImpl>();
 
 builder.Services.AddWindowsService(options =>
 {

@@ -1,5 +1,6 @@
+namespace WingetAutomatic.Repository;
+
 using WingetAutomatic.Model;
-using WingetAutomatic.Repository;
 using System.Text.Json;
 
 public class ConfigurationRepositoryImpl : ConfigurationRepository
