@@ -1,6 +1,8 @@
 namespace WingetAutomatic;
 
+using System.Diagnostics;
 using WingetAutomatic.Model;
+using WingetAutomatic.Models;
 using WingetAutomatic.Repository;
 using WingetAutomatic.Util;
 
@@ -53,6 +55,19 @@ public class Worker : BackgroundService
 
                 if (!stoppingToken.IsCancellationRequested)
                     logger.LogInformation("Updates applied.");
+
+                // Rebooting system if reboot policy is always and updates have been applied
+                if (configuration.rebootPolicy == RebootPolicy.Always && outdatedPackages.Count > 0)
+                {
+                    logger.LogInformation("Reboot policy set to Always. Rebooting system...");
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "shutdown",
+                        Arguments = "/r /t 0 /f",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    });
+                }
 
             }
             catch (System.Exception ex)
