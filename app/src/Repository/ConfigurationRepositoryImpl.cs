@@ -21,6 +21,9 @@ public class ConfigurationRepositoryImpl : ConfigurationRepository
 
     public Configuration? load()
     {
+        if (!File.Exists(configFile))
+            return null;
+
         StreamReader streamReader = new StreamReader(configFile);
         string jsonString = streamReader.ReadToEnd();
         streamReader.Close();
