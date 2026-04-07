@@ -2,9 +2,20 @@ namespace WingetAutomatic.Util;
 
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using WingetAutomatic.Model;
 
 public class Winget
 {
+    private string? wingetPath;
+    private Configuration configuration;
+
+    public Winget(Configuration configuration)
+    {
+        this.configuration = configuration;
+        wingetPath = GetWingetPath();
+    }
+
+
     // Try to find Winget command line on the system
     public string? GetWingetPath()
     {
@@ -31,7 +42,7 @@ public class Winget
         return wingetPath;
     }
 
-    public async Task<string> RunWingetCommandAsync(string wingetPath, string arguments, CancellationToken stoppingToken)
+    public async Task<string> RunWingetCommandAsync(string arguments, CancellationToken stoppingToken)
     {
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
@@ -54,12 +65,12 @@ public class Winget
     }
 
     // Obtains outdated packages using WinGet
-    public async Task<List<string>> GetOutdatedPackagesAsync(string wingetPath, CancellationToken stoppingToken)
+    public async Task<List<string>> GetOutdatedPackagesAsync(CancellationToken stoppingToken)
     {
         var packageIds = new List<string>();
         if (string.IsNullOrEmpty(wingetPath)) return packageIds;
 
-        string output = await RunWingetCommandAsync(wingetPath, "upgrade", stoppingToken);
+        string output = await RunWingetCommandAsync("upgrade", stoppingToken);
 
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         bool isTableData = false;
