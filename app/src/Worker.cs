@@ -41,12 +41,18 @@ public class Worker : BackgroundService
 
                 foreach(string outdatedPackage in outdatedPackages)
                 {
+                    // Stopping loop if system is shutting down
                     if (stoppingToken.IsCancellationRequested) break;
+
                     logger.LogInformation("Updating {0}...", outdatedPackage);
-                    await winget.UpdatePackageAsync(outdatedPackage, stoppingToken);
+                    
+                    // We use CancellationToken.None here so that, if the shutdown starts
+                    // now, this specific command finishes before we close the application.
+                    await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
                 }
 
-                logger.LogInformation("Updates applied.");
+                if (!stoppingToken.IsCancellationRequested)
+                    logger.LogInformation("Updates applied.");
 
             }
             catch (System.Exception ex)

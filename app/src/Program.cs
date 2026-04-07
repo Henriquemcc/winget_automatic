@@ -6,6 +6,13 @@ using WingetAutomatic.Util;
 using WingetAutomatic.Repository;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.Configure<HostOptions>(options =>
+{
+    // Set a longer timeout for graceful shutdown (e.g., 10 minutes).
+    options.ShutdownTimeout = TimeSpan.FromMinutes(10);
+});
+
 builder.Services.AddSingleton<Winget>();
 builder.Services.AddSingleton<ConfigurationRepository, ConfigurationRepositoryImpl>();
 
