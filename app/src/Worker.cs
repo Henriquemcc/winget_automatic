@@ -4,10 +4,8 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using WingetAutomatic.Util;
 
-public class Worker(ILogger<Worker> logger) : BackgroundService
+public class Worker(ILogger<Worker> logger, Winget winget) : BackgroundService
 {
-    Winget winget = new Winget();
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)

@@ -3,7 +3,7 @@ namespace WingetAutomatic.Util;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-class Winget
+public class Winget
 {
     // Try to find Winget command line on the system
     public string? GetWingetPath()
