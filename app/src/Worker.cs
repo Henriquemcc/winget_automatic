@@ -2,9 +2,12 @@ namespace WingetAutomatic;
 
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using WingetAutomatic.Util;
 
 public class Worker(ILogger<Worker> logger) : BackgroundService
 {
+    Winget winget = new Winget();
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -12,7 +15,7 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
             try
             {
                 logger.LogInformation("Finding WinGet on the system...");
-                string? wingetPath = GetWingetPath();
+                string? wingetPath = winget.GetWingetPath();
 
                 if (string.IsNullOrEmpty(wingetPath))
                 {
@@ -21,7 +24,7 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
                 else
                 {
                     logger.LogInformation("Applying updates...");
-                    string output = await RunWingetCommandAsync(wingetPath, "upgrade --all --silent --accept-source-agreements --accept-package-agreements", stoppingToken);
+                    string output = await winget.RunWingetCommandAsync(wingetPath, "upgrade --all --silent --accept-source-agreements --accept-package-agreements", stoppingToken);
 
                     logger.LogInformation("Winget Output: {Output}", output);
                     logger.LogInformation("Updates applied.");
@@ -36,92 +39,5 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
             // or will end immediately, which would cause error in the MSI.
             await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
         }
-    }
-
-    // Try to find Winget command line on the system
-    private string? GetWingetPath()
-    {
-        string? wingetPath = null;
-
-        // Trying to find Winget on System PATH first
-        wingetPath = Environment.GetEnvironmentVariable("PATH")?
-            .Split(';')
-            .Select(p => Path.Combine(p, "winget.exe"))
-            .FirstOrDefault(File.Exists);
-
-        // Searching on the folder WindowsApps (requires caution with permissions)
-        if (wingetPath == null)
-        {
-            string windowsAppsPath = @"C:\Program Files\WindowsApps";
-            try
-            {
-                if (Directory.Exists(windowsAppsPath))
-                {
-                    var files = Directory.GetFiles(windowsAppsPath, "winget.exe", SearchOption.AllDirectories);
-                    wingetPath = files.FirstOrDefault();
-                }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                logger.LogWarning("Access denied to WindowsApps folder while searching for WinGet.");
-            }
-        }
-
-        return wingetPath;
-    }
-
-    private async Task<string> RunWingetCommandAsync(string wingetPath, string arguments, CancellationToken stoppingToken)
-    {
-        ProcessStartInfo startInfo = new ProcessStartInfo
-        {
-            FileName = wingetPath,
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (Process? process = Process.Start(startInfo))
-        {
-            if (process == null) return "Failed to start WinGet process.";
-
-            string output = await process.StandardOutput.ReadToEndAsync(stoppingToken);
-            await process.WaitForExitAsync(stoppingToken);
-            return output;
-        }
-    }
-
-    // Obtains outdated packages using WinGet
-    private async Task<List<string>> GetOutdatedPackagesAsync(string wingetPath, CancellationToken stoppingToken)
-    {
-        var packageIds = new List<string>();
-        if (string.IsNullOrEmpty(wingetPath)) return packageIds;
-
-        string output = await RunWingetCommandAsync(wingetPath, "upgrade", stoppingToken);
-
-        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        bool isTableData = false;
-
-        foreach (var line in lines)
-        {
-            if (line.Contains("---"))
-            {
-                isTableData = true;
-                continue;
-            }
-
-            if (isTableData)
-            {
-                // WinGet separates columns with 2 or more spaces. The ID is the second column.
-                var columns = Regex.Split(line.Trim(), @"\s{2,}");
-                if (columns.Length >= 2)
-                {
-                    packageIds.Add(columns[0].Split(" ")[2]);
-                }
-            }
-        }
-
-        return packageIds;
     }
 }
