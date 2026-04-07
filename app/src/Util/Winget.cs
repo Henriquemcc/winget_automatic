@@ -2,17 +2,27 @@ namespace WingetAutomatic.Util;
 
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using WingetAutomatic.Exception;
 using WingetAutomatic.Model;
 
 public class Winget
 {
     private string? wingetPath;
     private Configuration configuration;
+    private ILogger<Worker> logger;
 
-    public Winget(Configuration configuration)
+    public Winget(Configuration configuration, ILogger<Worker> logger)
     {
+        this.logger = logger;       
         this.configuration = configuration;
+
+        // Getting WinGet path
         wingetPath = GetWingetPath();
+        if (string.IsNullOrEmpty(wingetPath))
+        {
+            logger.LogError("WinGet not found on the system.");
+            throw new WingetNotFoundException();
+        }
     }
 
 
