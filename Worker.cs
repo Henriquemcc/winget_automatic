@@ -79,4 +79,51 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
 
         return wingetPath;
     }
+
+    // Obtains outdated packages using WinGet
+    private async Task<List<string>> GetOutdatedPackagesAsync(string wingetPath, CancellationToken stoppingToken)
+    {
+        var packageIds = new List<string>();
+        if (string.IsNullOrEmpty(wingetPath)) return packageIds;
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = wingetPath,
+            Arguments = "upgrade",
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(startInfo);
+        if (process != null)
+        {
+            string output = await process.StandardOutput.ReadToEndAsync(stoppingToken);
+            await process.WaitForExitAsync(stoppingToken);
+
+            var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            bool isTableData = false;
+
+            foreach (var line in lines)
+            {
+                if (line.Contains("---"))
+                {
+                    isTableData = true;
+                    continue;
+                }
+
+                if (isTableData)
+                {
+                    // WinGet separates columns with 2 or more spaces. The ID is the second column.
+                    var columns = Regex.Split(line.Trim(), @"\s{2,}");
+                    if (columns.Length >= 2)
+                    {
+                        packageIds.Add(columns[0].Split(" ")[2]);
+                    }
+                }
+            }
+        }
+
+        return packageIds;
+    }
 }
