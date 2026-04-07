@@ -1,6 +1,7 @@
 namespace WingetAutomatic.Util;
 
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using WingetAutomatic.Exception;
 using WingetAutomatic.Model;
@@ -123,5 +124,40 @@ public class Winget
         }
 
         return packageIds;
+    }
+
+    public async Task UpdatePackageAsync(string packageName, CancellationToken stoppingToken)
+    {
+        StringBuilder args = new StringBuilder();
+        args.Append("update ");
+        args.Append($"{packageName} ");
+
+        if (configuration.rebootPolicy == Models.RebootPolicy.WhenNecessary || configuration.rebootPolicy == Models.RebootPolicy.Always)
+        {
+            args.Append("--allow-reboot ");
+        }
+
+        if (configuration.ignoreSecurityHash)
+        {
+            args.Append("--ignore-security-hash ");
+        }
+
+        if (configuration.ignoreMalwareScan)
+        {
+            args.Append("--ignore-malware-scan ");
+        }
+
+        if (configuration.downloadProxy != null)
+        {
+            args.Append("--proxy ");
+            args.Append(configuration.downloadProxy);
+        }
+
+        if (configuration.disableProxy)
+        {
+            args.Append("--no-proxy ");
+        }
+
+        await RunWingetCommandAsync(args.ToString(), stoppingToken);
     }
 }
