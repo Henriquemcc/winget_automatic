@@ -10,6 +10,11 @@ class ConfigurationRepositoryImpl : ConfigurationRepository
     public ConfigurationRepositoryImpl()
     {
         configFolder = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "WingetAutomatic");
+
+        // Creating config directory
+        if (!Directory.Exists(configFolder))
+            Directory.CreateDirectory(configFolder);
+            
         configFile = Path.Join(configFolder, "config.json");
     }
 
