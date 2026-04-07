@@ -67,14 +67,21 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
             .Select(p => Path.Combine(p, "winget.exe"))
             .FirstOrDefault(File.Exists);
 
-        // Searching on the folder WindowsApps
+        // Searching on the folder WindowsApps (requires caution with permissions)
         if (wingetPath == null)
         {
             string windowsAppsPath = @"C:\Program Files\WindowsApps";
-            if (Directory.Exists(windowsAppsPath))
+            try
             {
-                var files = Directory.GetFiles(windowsAppsPath, "winget.exe", SearchOption.AllDirectories);
-                wingetPath =  files.First();
+            if (Directory.Exists(windowsAppsPath))
+                {
+                    var files = Directory.GetFiles(windowsAppsPath, "winget.exe", SearchOption.AllDirectories);
+                    wingetPath = files.FirstOrDefault();
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                logger.LogWarning("Access denied to WindowsApps folder while searching for WinGet.");
             }
         }
 
