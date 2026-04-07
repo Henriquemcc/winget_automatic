@@ -81,6 +81,28 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
         return wingetPath;
     }
 
+    private async Task<string> RunWingetCommandAsync(string wingetPath, string arguments, CancellationToken stoppingToken)
+    {
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = wingetPath,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using (Process? process = Process.Start(startInfo))
+        {
+            if (process == null) return "Failed to start WinGet process.";
+
+            string output = await process.StandardOutput.ReadToEndAsync(stoppingToken);
+            await process.WaitForExitAsync(stoppingToken);
+            return output;
+        }
+    }
+
     // Obtains outdated packages using WinGet
     private async Task<List<string>> GetOutdatedPackagesAsync(string wingetPath, CancellationToken stoppingToken)
     {
