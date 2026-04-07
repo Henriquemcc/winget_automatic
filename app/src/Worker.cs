@@ -10,23 +10,14 @@ public class Worker(ILogger<Worker> logger, Winget winget) : BackgroundService
         {
             try
             {
-                logger.LogInformation("Finding WinGet on the system...");
-                string? wingetPath = winget.GetWingetPath();
+                logger.LogInformation("Applying updates...");
+                string output = await winget.RunWingetCommandAsync("upgrade --all --silent --accept-source-agreements --accept-package-agreements", stoppingToken);
 
-                if (string.IsNullOrEmpty(wingetPath))
-                {
-                    logger.LogError("WinGet not found on the system.");
-                }
-                else
-                {
-                    logger.LogInformation("Applying updates...");
-                    string output = await winget.RunWingetCommandAsync(wingetPath, "upgrade --all --silent --accept-source-agreements --accept-package-agreements", stoppingToken);
+                logger.LogInformation("Winget Output: {Output}", output);
+                logger.LogInformation("Updates applied.");
 
-                    logger.LogInformation("Winget Output: {Output}", output);
-                    logger.LogInformation("Updates applied.");
-                }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 logger.LogError(ex, "Error applying updates.");
             }
