@@ -13,36 +13,18 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
             {
                 logger.LogInformation("Finding WinGet on the system...");
                 string? wingetPath = GetWingetPath();
-                
+
                 if (string.IsNullOrEmpty(wingetPath))
                 {
                     logger.LogError("WinGet not found on the system.");
                 }
                 else
                 {
-                    ProcessStartInfo startInfo = new ProcessStartInfo
-                    {
-                        FileName = wingetPath,
-                        Arguments = "upgrade --all --silent --accept-source-agreements --accept-package-agreements",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-
                     logger.LogInformation("Applying updates...");
-                    using (Process? process = Process.Start(startInfo))
-                    {
-                        if (process != null)
-                        {
-                            // Using Task to avoid blocking the service main thread
-                            string output = await process.StandardOutput.ReadToEndAsync(stoppingToken);
-                            await process.WaitForExitAsync(stoppingToken);
+                    string output = await RunWingetCommandAsync(wingetPath, "upgrade --all --silent --accept-source-agreements --accept-package-agreements", stoppingToken);
 
-                            logger.LogInformation("Winget Output: {Output}", output);
-                            logger.LogInformation("Updates applied.");
-                        }
-                    }
+                    logger.LogInformation("Winget Output: {Output}", output);
+                    logger.LogInformation("Updates applied.");
                 }
             }
             catch (Exception ex)
@@ -73,7 +55,7 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
             string windowsAppsPath = @"C:\Program Files\WindowsApps";
             try
             {
-            if (Directory.Exists(windowsAppsPath))
+                if (Directory.Exists(windowsAppsPath))
                 {
                     var files = Directory.GetFiles(windowsAppsPath, "winget.exe", SearchOption.AllDirectories);
                     wingetPath = files.FirstOrDefault();
@@ -116,40 +98,26 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
         var packageIds = new List<string>();
         if (string.IsNullOrEmpty(wingetPath)) return packageIds;
 
-        var startInfo = new ProcessStartInfo
+        string output = await RunWingetCommandAsync(wingetPath, "upgrade", stoppingToken);
+
+        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        bool isTableData = false;
+
+        foreach (var line in lines)
         {
-            FileName = wingetPath,
-            Arguments = "upgrade",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(startInfo);
-        if (process != null)
-        {
-            string output = await process.StandardOutput.ReadToEndAsync(stoppingToken);
-            await process.WaitForExitAsync(stoppingToken);
-
-            var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            bool isTableData = false;
-
-            foreach (var line in lines)
+            if (line.Contains("---"))
             {
-                if (line.Contains("---"))
-                {
-                    isTableData = true;
-                    continue;
-                }
+                isTableData = true;
+                continue;
+            }
 
-                if (isTableData)
+            if (isTableData)
+            {
+                // WinGet separates columns with 2 or more spaces. The ID is the second column.
+                var columns = Regex.Split(line.Trim(), @"\s{2,}");
+                if (columns.Length >= 2)
                 {
-                    // WinGet separates columns with 2 or more spaces. The ID is the second column.
-                    var columns = Regex.Split(line.Trim(), @"\s{2,}");
-                    if (columns.Length >= 2)
-                    {
-                        packageIds.Add(columns[0].Split(" ")[2]);
-                    }
+                    packageIds.Add(columns[0].Split(" ")[2]);
                 }
             }
         }
