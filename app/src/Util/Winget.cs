@@ -4,17 +4,31 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using WingetAutomatic.Exception;
 using WingetAutomatic.Model;
+using WingetAutomatic.Repository;
 
 public class Winget
 {
     private string? wingetPath;
+    private ConfigurationRepository configurationRepository;
     private Configuration configuration;
     private ILogger<Worker> logger;
 
-    public Winget(Configuration configuration, ILogger<Worker> logger)
+    public Winget(ConfigurationRepository configurationRepository, ILogger<Worker> logger)
     {
-        this.logger = logger;       
-        this.configuration = configuration;
+        this.logger = logger;
+        this.configurationRepository = configurationRepository;
+        
+        // Getting configuration
+        Configuration? configuration = configurationRepository.load();
+        if (configuration == null)
+        {
+            this.configuration = new Configuration();
+            configurationRepository.save(this.configuration);
+        }
+        else
+        {
+            this.configuration = configuration;
+        }
 
         // Getting WinGet path
         wingetPath = GetWingetPath();
