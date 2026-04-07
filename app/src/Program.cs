@@ -1,4 +1,4 @@
-using winget_automatic;
+using WingetAutomatic;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Logging.EventLog;
 

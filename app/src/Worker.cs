@@ -1,4 +1,4 @@
-namespace winget_automatic;
+namespace WingetAutomatic;
 
 using System.Diagnostics;
 using System.Text.RegularExpressions;
