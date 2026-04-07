@@ -41,6 +41,13 @@ public class Worker : BackgroundService
                 logger.LogInformation("Getting updates...");
                 List<string> outdatedPackages = await winget.GetOutdatedPackagesAsync(stoppingToken);
 
+                // Removing ignored packages
+                foreach(string ignoredPackage in configuration.ignoredPackages)
+                {
+                    outdatedPackages.Remove(ignoredPackage);
+                }
+
+                // Updating packages
                 foreach(string outdatedPackage in outdatedPackages)
                 {
                     // Stopping loop if system is shutting down
