@@ -1,19 +1,51 @@
 namespace WingetAutomatic;
 
+using WingetAutomatic.Model;
+using WingetAutomatic.Repository;
 using WingetAutomatic.Util;
 
-public class Worker(ILogger<Worker> logger, Winget winget) : BackgroundService
+public class Worker : BackgroundService
 {
+    Configuration configuration;
+    ILogger<Worker> logger;
+    Winget winget;
+    ConfigurationRepository configurationRepository;
+
+    public Worker(ILogger<Worker> logger, Winget winget, ConfigurationRepository configurationRepository)
+    {
+        this.logger = logger;
+        this.winget = winget;
+        this.configurationRepository = configurationRepository;
+
+        // Getting configuration
+        Configuration? configuration = configurationRepository.load();
+        if (configuration == null)
+        {
+            this.configuration = new Configuration();
+            configurationRepository.save(this.configuration);
+        }
+        else
+        {
+            this.configuration = configuration;
+        }
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                logger.LogInformation("Applying updates...");
-                string output = await winget.RunWingetCommandAsync("upgrade --all --silent --accept-source-agreements --accept-package-agreements", stoppingToken);
+                logger.LogInformation("Getting updates...");
+                List<string> outdatedPackages = await winget.GetOutdatedPackagesAsync(stoppingToken);
 
-                logger.LogInformation("Winget Output: {Output}", output);
+                foreach(string outdatedPackage in outdatedPackages)
+                {
+                    if (stoppingToken.IsCancellationRequested) break;
+                    logger.LogInformation("Updating {0}...", outdatedPackage);
+                    await winget.UpdatePackageAsync(outdatedPackage, stoppingToken);
+                }
+
                 logger.LogInformation("Updates applied.");
 
             }
@@ -24,7 +56,7 @@ public class Worker(ILogger<Worker> logger, Winget winget) : BackgroundService
 
             // Important: The service must wait a period of time, otherwise it will run in infinite loop consuming CPU
             // or will end immediately, which would cause error in the MSI.
-            await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+            await Task.Delay(configuration.updateInterval, stoppingToken);
         }
     }
 }
