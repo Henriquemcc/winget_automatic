@@ -8,7 +8,7 @@ using WingetAutomatic.Repository;
 
 public class Winget
 {
-    private string? wingetPath;
+    private string wingetPath;
     private ConfigurationRepository configurationRepository;
     private Configuration configuration;
     private ILogger<Worker> logger;
@@ -31,11 +31,15 @@ public class Winget
         }
 
         // Getting WinGet path
-        wingetPath = GetWingetPath();
+        string? wingetPath = GetWingetPath();
         if (string.IsNullOrEmpty(wingetPath))
         {
             logger.LogError("WinGet not found on the system.");
             throw new WingetNotFoundException();
+        }
+        else
+        {
+            this.wingetPath = wingetPath;
         }
     }
 
