@@ -7,9 +7,13 @@ Description: A Windows service that runs in the background automatically updatin
 - The program must run in the background and automatically installs updates.
 - The updates must be installed silently with no interaction of the user.
 - The program must detect whether the system is shutting down and safely finish the installation of the update before shutting down.
-- The program must allow the user to specify the delay time between each update check.
-- The program must allow the user to specify which packages to do not update.
-- The program must allow the user to specify whether to reboot the system: never, when necessary, always.
+- The program must allow the user to specify the delay time between each update check. The default is 1 day.
+- The program must allow the user to specify which packages to do not update. The default is none.
+- The program must allow the user to specify whether to reboot the system: never, when necessary, always. The default is never.
+- The program must allow the user to specify whether to ignore the security hash. The default is no.
+- The program must allow the user to specify whether to ignore the malware scan. The default is no.
+- The program must allow the user to specify the proxy to use to download the packages. The default is none.
+- The program must allow the user to specify whether to disable the use of proxy. The default is no.
 
 ## Non-Functional Requirements
 
