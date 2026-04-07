@@ -2,7 +2,7 @@ using WingetAutomatic.Models;
 
 namespace WingetAutomatic.Model;
 
-class Configuration
+public class Configuration
 {
     TimeSpan updateInterval = TimeSpan.FromDays(1);
     List<String> ignoredPackages = new List<string>();

@@ -2,7 +2,7 @@ using WingetAutomatic.Model;
 using WingetAutomatic.Repository;
 using System.Text.Json;
 
-class ConfigurationRepositoryImpl : ConfigurationRepository
+public class ConfigurationRepositoryImpl : ConfigurationRepository
 {
     private string configFolder;
     private string configFile;
