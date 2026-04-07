@@ -1,6 +1,7 @@
 namespace winget_automatic;
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 public class Worker(ILogger<Worker> logger) : BackgroundService
 {
