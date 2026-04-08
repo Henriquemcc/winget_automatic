@@ -24,10 +24,18 @@ public class ConfigurationRepositoryImpl : ConfigurationRepository
         if (!File.Exists(configFile))
             return null;
 
-        using (StreamReader streamReader = new StreamReader(configFile))
+        try
         {
-            string jsonString = streamReader.ReadToEnd();
-            return JsonSerializer.Deserialize<Configuration>(jsonString);
+            using (StreamReader streamReader = new StreamReader(configFile))
+            {
+                string jsonString = streamReader.ReadToEnd();
+                return JsonSerializer.Deserialize<Configuration>(jsonString);
+            }
+        }
+        catch (JsonException)
+        {
+            // If the JSON is malformed, treat it as null to create a new one.
+            return null;
         }
     }
 
