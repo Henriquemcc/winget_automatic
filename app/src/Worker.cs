@@ -8,15 +8,18 @@ using WingetAutomatic.Util;
 public class Worker : BackgroundService
 {
     Configuration configuration;
+    LastUpdate lastUpdate;
     ILogger<Worker> logger;
     Winget winget;
     ConfigurationRepository configurationRepository;
+    LastUpdateRepository lastUpdateRepository;
 
-    public Worker(ILogger<Worker> logger, Winget winget, ConfigurationRepository configurationRepository)
+    public Worker(ILogger<Worker> logger, Winget winget, ConfigurationRepository configurationRepository, LastUpdateRepository lastUpdateRepository)
     {
         this.logger = logger;
         this.winget = winget;
         this.configurationRepository = configurationRepository;
+        this.lastUpdateRepository = lastUpdateRepository;
 
         // Getting configuration
         Configuration? configuration = configurationRepository.load();
@@ -28,6 +31,18 @@ public class Worker : BackgroundService
         else
         {
             this.configuration = configuration;
+        }
+
+        // Getting last update
+        LastUpdate? lastUpdate = lastUpdateRepository.load();
+        if (lastUpdate == null)
+        {
+            this.lastUpdate = new LastUpdate();
+            lastUpdateRepository.save(this.lastUpdate);
+        }
+        else
+        {
+            this.lastUpdate = lastUpdate;
         }
     }
 
@@ -41,23 +56,26 @@ public class Worker : BackgroundService
                 List<string> outdatedPackages = await winget.GetOutdatedPackagesAsync(stoppingToken);
 
                 // Removing ignored packages
-                foreach(string ignoredPackage in configuration.ignoredPackages)
+                foreach (string ignoredPackage in configuration.ignoredPackages)
                 {
                     outdatedPackages.Remove(ignoredPackage);
                 }
 
                 // Updating packages
-                foreach(string outdatedPackage in outdatedPackages)
+                foreach (string outdatedPackage in outdatedPackages)
                 {
                     // Stopping loop if system is shutting down
                     if (stoppingToken.IsCancellationRequested) break;
 
                     logger.LogInformation("Updating {0}...", outdatedPackage);
-                    
+
                     // We use CancellationToken.None here so that, if the shutdown starts
                     // now, this specific command finishes before we close the application.
                     await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
                 }
+
+                // Saving last update
+                saveLastUpdate(true, DateTime.Now);
 
                 if (!stoppingToken.IsCancellationRequested)
                     logger.LogInformation("Updates applied.");
@@ -79,11 +97,19 @@ public class Worker : BackgroundService
             catch (System.Exception ex)
             {
                 logger.LogError(ex, "Error applying updates.");
+                saveLastUpdate(false, DateTime.Now);
             }
 
             // Important: The service must wait a period of time, otherwise it will run in infinite loop consuming CPU
             // or will end immediately, which would cause error in the MSI.
             await Task.Delay(configuration.updateInterval, stoppingToken);
         }
+    }
+
+    private void saveLastUpdate(bool success, DateTime dateTime)
+    {
+        lastUpdate.success = success;
+        lastUpdate.dateTime = dateTime;
+        lastUpdateRepository.save(lastUpdate);
     }
 }
