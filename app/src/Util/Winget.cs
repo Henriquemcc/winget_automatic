@@ -18,7 +18,7 @@ public class Winget
     {
         this.logger = logger;
         this.configurationRepository = configurationRepository;
-        
+
         // Getting configuration
         Configuration? configuration = configurationRepository.load();
         if (configuration == null)
@@ -135,9 +135,23 @@ public class Winget
 
             if (isTableData)
             {
-                int idRight = line.IndexOf(" ", idLeft);
-                packageIds.Add(line.Substring(idLeft, idRight - idLeft));
-                isTableData = false;
+                // 'X updates available'
+                if (line[0] >= '0' && line[0] <= '9')
+                {
+                    isTableData = false;
+                    continue;
+                }
+
+                if (idLeft >= 0 && idLeft < line.Length)
+                {
+                    int idRight = line.IndexOf(" ", idLeft);
+                    if (idRight >= 0 && idRight < line.Length)
+                    {
+                        string package = line.Substring(idLeft, idRight - idLeft).Trim();
+                        if (!package.IsWhiteSpace())
+                            packageIds.Add(package);
+                    }
+                }
             }
         }
 
