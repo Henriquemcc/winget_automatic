@@ -104,8 +104,15 @@ public class Winget
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         bool isTableData = false;
 
-        foreach (var line in lines)
+        int idLeft = 0;
+        foreach (string line in lines)
         {
+            if (line.Contains("ID"))
+            {
+                idLeft = line.IndexOf("ID");
+                continue;
+            }
+
             if (line.Contains("---"))
             {
                 isTableData = true;
@@ -114,12 +121,9 @@ public class Winget
 
             if (isTableData)
             {
-                // WinGet separates columns with 2 or more spaces. The ID is the second column.
-                var columns = Regex.Split(line.Trim(), @"\s{2,}");
-                if (columns.Length >= 2)
-                {
-                    packageIds.Add(columns[0].Split(" ")[2]);
-                }
+                int idRight = line.IndexOf(" ", idLeft);
+                packageIds.Add(line.Substring(idLeft, idRight - idLeft));
+                isTableData = false;
             }
         }
 
