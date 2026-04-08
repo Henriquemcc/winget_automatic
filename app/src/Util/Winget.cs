@@ -121,9 +121,9 @@ public class Winget
 
         foreach (string line in lines)
         {
-            if (line.Contains("ID"))
+            if (line.Contains("ID", StringComparison.OrdinalIgnoreCase))
             {
-                left = line.IndexOf("ID");
+                left = line.IndexOf("ID", StringComparison.OrdinalIgnoreCase);
                 continue;
             }
 
