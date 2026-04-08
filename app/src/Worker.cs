@@ -24,12 +24,16 @@ public class Worker : BackgroundService
         if (configuration == null)
         {
             this.configuration = new Configuration();
-            configurationRepository.save(this.configuration);
         }
         else
         {
             this.configuration = configuration;
         }
+    }
+
+    ~Worker()
+    {
+        configurationRepository.save(configuration);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
