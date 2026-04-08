@@ -24,6 +24,7 @@ public class Winget
         if (configuration == null)
         {
             this.configuration = new Configuration();
+            configurationRepository.save(this.configuration);
         }
         else
         {
@@ -41,11 +42,6 @@ public class Winget
         {
             this.wingetPath = wingetPath;
         }
-    }
-
-    ~Winget()
-    {
-        configurationRepository.save(configuration);
     }
 
 
