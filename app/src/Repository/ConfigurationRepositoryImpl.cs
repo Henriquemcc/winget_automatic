@@ -15,7 +15,7 @@ public class ConfigurationRepositoryImpl : ConfigurationRepository
         // Creating config directory
         if (!Directory.Exists(configFolder))
             Directory.CreateDirectory(configFolder);
-            
+
         configFile = Path.Join(configFolder, "config.json");
     }
 
@@ -24,17 +24,19 @@ public class ConfigurationRepositoryImpl : ConfigurationRepository
         if (!File.Exists(configFile))
             return null;
 
-        StreamReader streamReader = new StreamReader(configFile);
-        string jsonString = streamReader.ReadToEnd();
-        streamReader.Close();
-        return JsonSerializer.Deserialize<Configuration>(jsonString);
+        using (StreamReader streamReader = new StreamReader(configFile))
+        {
+            string jsonString = streamReader.ReadToEnd();
+            return JsonSerializer.Deserialize<Configuration>(jsonString);
+        }
     }
 
     public void save(Configuration configuration)
     {
         string jsonString = JsonSerializer.Serialize(configuration);
-        StreamWriter streamWriter = new StreamWriter(configFile);
-        streamWriter.Write(jsonString);
-        streamWriter.Close();
+        using (StreamWriter streamWriter = new StreamWriter(configFile))
+        {
+            streamWriter.Write(jsonString);
+        }
     }
 }
