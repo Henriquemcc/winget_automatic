@@ -106,10 +106,6 @@ public class Worker : BackgroundService
                 logger.LogError(ex, "Error applying updates.");
                 saveLastUpdate(false, DateTime.Now);
             }
-
-            // Important: The service must wait a period of time, otherwise it will run in infinite loop consuming CPU
-            // or will end immediately, which would cause error in the MSI.
-            await Task.Delay(configuration.updateInterval, stoppingToken);
         }
     }
 
