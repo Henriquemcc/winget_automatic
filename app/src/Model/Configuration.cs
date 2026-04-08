@@ -1,4 +1,4 @@
-using WingetAutomatic.Models;
+using WingetAutomatic.Model;
 
 namespace WingetAutomatic.Model;
 

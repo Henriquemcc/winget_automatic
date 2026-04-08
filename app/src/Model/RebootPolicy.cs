@@ -1,4 +1,4 @@
-namespace WingetAutomatic.Models
+namespace WingetAutomatic.Model
 {
     public enum RebootPolicy
     {

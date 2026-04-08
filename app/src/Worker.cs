@@ -2,7 +2,6 @@ namespace WingetAutomatic;
 
 using System.Diagnostics;
 using WingetAutomatic.Model;
-using WingetAutomatic.Models;
 using WingetAutomatic.Repository;
 using WingetAutomatic.Util;
 

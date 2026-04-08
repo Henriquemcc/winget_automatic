@@ -153,7 +153,7 @@ public class Winget
         args.Append("update ");
         args.Append($"{packageName} ");
 
-        if (configuration.rebootPolicy == Models.RebootPolicy.WhenNecessary || configuration.rebootPolicy == Models.RebootPolicy.Always)
+        if (configuration.rebootPolicy == RebootPolicy.WhenNecessary || configuration.rebootPolicy == RebootPolicy.Always)
         {
             args.Append("--allow-reboot ");
         }
