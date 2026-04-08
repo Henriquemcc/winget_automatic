@@ -21,30 +21,22 @@ public class ConfigurationRepositoryImpl : ConfigurationRepository
 
     public Configuration? load()
     {
-        if (!File.Exists(configFile))
-            return null;
+        if (!File.Exists(configFile)) return null;
 
         try
         {
-            using (StreamReader streamReader = new StreamReader(configFile))
-            {
-                string jsonString = streamReader.ReadToEnd();
-                return JsonSerializer.Deserialize<Configuration>(jsonString);
-            }
+            string jsonString = File.ReadAllText(configFile);
+            return string.IsNullOrWhiteSpace(jsonString)
+                ? null
+                : JsonSerializer.Deserialize<Configuration>(jsonString);
         }
-        catch (JsonException)
-        {
-            // If the JSON is malformed, treat it as null to create a new one.
-            return null;
-        }
+        catch { return null; }
     }
 
     public void save(Configuration configuration)
     {
-        string jsonString = JsonSerializer.Serialize(configuration);
-        using (StreamWriter streamWriter = new StreamWriter(configFile))
-        {
-            streamWriter.Write(jsonString);
-        }
+        var options = new JsonSerializerOptions { WriteIndented = true, IncludeFields = true };
+        string jsonString = JsonSerializer.Serialize(configuration, options);
+        File.WriteAllText(configFile, jsonString);
     }
 }
