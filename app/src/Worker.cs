@@ -52,6 +52,13 @@ public class Worker : BackgroundService
         {
             try
             {
+                // Delaying update until it has passed the update time interval
+                DateTime timeDistance = lastUpdate.dateTime + configuration.updateInterval;
+                if (DateTime.Now < timeDistance)
+                {
+                    await Task.Delay(timeDistance - DateTime.Now, stoppingToken);
+                }
+                
                 logger.LogInformation("Getting updates...");
                 List<string> outdatedPackages = await winget.GetOutdatedPackagesAsync(stoppingToken);
 
