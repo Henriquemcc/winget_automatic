@@ -99,7 +99,21 @@ public class Winget
         var packageIds = new List<string>();
         if (string.IsNullOrEmpty(wingetPath)) return packageIds;
 
-        string output = await RunWingetCommandAsync("upgrade", stoppingToken);
+        StringBuilder args = new StringBuilder();
+        args.Append("upgrade ");
+
+        if (configuration.downloadProxy != null)
+        {
+            args.Append("--proxy ");
+            args.Append(configuration.downloadProxy);
+        }
+
+        if (configuration.disableProxy)
+        {
+            args.Append("--no-proxy ");
+        }
+
+        string output = await RunWingetCommandAsync(args.ToString(), stoppingToken);
 
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         bool isTableData = false;
