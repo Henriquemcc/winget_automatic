@@ -115,42 +115,31 @@ public class Winget
 
         string output = await RunWingetCommandAsync(args.ToString(), stoppingToken);
 
-        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        bool isTableData = false;
+        string[] lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        string regex = @"[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+";
+        int left = -1;
 
-        int idLeft = 0;
         foreach (string line in lines)
         {
             if (line.Contains("ID"))
             {
-                idLeft = line.IndexOf("ID");
+                left = line.IndexOf("ID");
                 continue;
             }
 
-            if (line.Contains("---"))
+            if (left <= 0 || line.StartsWith('-') || string.IsNullOrWhiteSpace(line))
             {
-                isTableData = true;
                 continue;
             }
 
-            if (isTableData)
+            if (left < line.Length)
             {
-                // 'X updates available'
-                if (line[0] >= '0' && line[0] <= '9')
+                string lineSubstring = line.Substring(left);
+                Match match = Regex.Match(lineSubstring, regex);
+                if (match.Success)
                 {
-                    isTableData = false;
-                    continue;
-                }
-
-                if (idLeft >= 0 && idLeft < line.Length)
-                {
-                    int idRight = line.IndexOf(" ", idLeft);
-                    if (idRight >= 0 && idRight < line.Length)
-                    {
-                        string package = line.Substring(idLeft, idRight - idLeft).Trim();
-                        if (!package.IsWhiteSpace())
-                            packageIds.Add(package);
-                    }
+                    string packageId = match.Value;
+                    packageIds.Add(packageId);
                 }
             }
         }
