@@ -15,6 +15,7 @@ builder.Services.Configure<HostOptions>(options =>
 
 builder.Services.AddSingleton<Winget>();
 builder.Services.AddSingleton<ConfigurationRepository, ConfigurationRepositoryImpl>();
+builder.Services.AddSingleton<LastUpdateRepository, LastUpdateRepositoryImpl>();
 
 builder.Services.AddWindowsService(options =>
 {
