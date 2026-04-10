@@ -25,6 +25,9 @@ try {
     # Assigns the content to the control.
     $richTextBox.Text = $content
 
+    # Adding font
+    $richTextBox.SelectionFont = $richTextBox.Font = [System.Drawing.Font]::new("Calibri", 12, [System.Drawing.FontStyle]::Regular)
+
     # Ensures that the destination directory exists.
     $destDir = Split-Path -Parent $DestinationPath
     if ($destDir -and -not (Test-Path $destDir)) {
