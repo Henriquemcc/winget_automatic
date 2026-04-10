@@ -15,6 +15,7 @@ $installerStage = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($
 New-Item -Path $installerStage -ItemType Directory -Force
 Copy-Item -Path ([System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)), "app", "bin", "Release", "net10.0", "win-x86", "publish", "winget_automatic.exe")) -Destination ([System.IO.Path]::Combine($installerStage, "winget_automatic_x86.exe"))
 Copy-Item -Path ([System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)), "app", "bin", "Release", "net10.0", "win-x64", "publish", "winget_automatic.exe")) -Destination ([System.IO.Path]::Combine($installerStage, "winget_automatic_x64.exe"))
+.\Convert-TxtToRtf.ps1 -SourcePath ([System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)), "LICENSE")) -DestinationPath ([System.IO.Path]::Combine($installerStage, "LICENSE.rtf"))
 
 # Building MSI Package
 dotnet build /p:ProductVersion=$ProductVersion /p:DefineConstants="ProductVersion=$ProductVersion"
