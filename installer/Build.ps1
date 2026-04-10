@@ -18,4 +18,5 @@ Copy-Item -Path ([System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([S
 .\Convert-TxtToRtf.ps1 -SourcePath ([System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)), "LICENSE")) -DestinationPath ([System.IO.Path]::Combine($installerStage, "LICENSE.rtf"))
 
 # Building MSI Package
+dotnet add package WixToolset.UI.wixext --version 4
 dotnet build /p:ProductVersion=$ProductVersion /p:DefineConstants="ProductVersion=$ProductVersion"
