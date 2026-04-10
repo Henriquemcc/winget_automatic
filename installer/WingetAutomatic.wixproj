@@ -1,5 +1,9 @@
-<Project Sdk="WixToolset.Sdk/6.0.0">
+<Project Sdk="WixToolset.Sdk/7.0.0">
   <PropertyGroup>
     <Platform>x86</Platform>
+    <AcceptEula>wix7</AcceptEula>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="7.0.0" />
+  </ItemGroup>
 </Project>

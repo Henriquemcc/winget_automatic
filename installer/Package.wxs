@@ -1,8 +1,12 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
     <Package Name="Winget Automatic"
     Manufacturer="Henrique Mendonça Castelar Campos"
     Version="$(var.ProductVersion)"
     UpgradeCode="5368c52b-c334-4269-a36c-1d8b2d615e91">
+
+    <!-- License -->
+    <WixVariable Id="WixUILicenseRtf" Value="installer-stage\LICENSE.rtf" />
+    <ui:WixUI Id="WixUI_Minimal" />
     
     <!-- Manages the removal of old versions automatically -->
     <MajorUpgrade DowngradeErrorMessage="A recent version is already installed." />
