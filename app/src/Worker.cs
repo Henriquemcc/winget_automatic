@@ -54,7 +54,7 @@ public class Worker : BackgroundService
             try
             {
                 // Delaying update until it has passed the update time interval
-                if (lastUpdate != null && lastUpdate.dateTime != null)
+                if (lastUpdate != null && lastUpdate.dateTime != null && lastUpdate.success == true)
                 {
                     DateTime timeDistance = (lastUpdate.dateTime ?? DateTime.MinValue) + configuration.updateInterval;
                     if (DateTime.Now < timeDistance)
