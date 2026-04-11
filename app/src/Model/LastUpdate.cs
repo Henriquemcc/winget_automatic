@@ -2,6 +2,6 @@ namespace WingetAutomatic.Model;
 
 public class LastUpdate
 {
-    public DateTime dateTime;
-    public bool success;
+    public DateTime? dateTime = null;
+    public bool? success = null;
 }

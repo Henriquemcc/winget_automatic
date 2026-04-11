@@ -54,10 +54,13 @@ public class Worker : BackgroundService
             try
             {
                 // Delaying update until it has passed the update time interval
-                DateTime timeDistance = lastUpdate.dateTime + configuration.updateInterval;
-                if (DateTime.Now < timeDistance)
+                if (lastUpdate != null && lastUpdate.dateTime != null)
                 {
-                    await Task.Delay(timeDistance - DateTime.Now, stoppingToken);
+                    DateTime timeDistance = (lastUpdate.dateTime ?? DateTime.MinValue) + configuration.updateInterval;
+                    if (DateTime.Now < timeDistance)
+                    {
+                        await Task.Delay(timeDistance - DateTime.Now, stoppingToken);
+                    }
                 }
 
                 // Waiting for Internet Connection
