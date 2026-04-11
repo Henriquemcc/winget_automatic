@@ -1,5 +1,6 @@
 namespace WingetAutomatic;
 
+using System.Net.Http;
 using System.Diagnostics;
 using WingetAutomatic.Model;
 using WingetAutomatic.Repository;
@@ -58,7 +59,14 @@ public class Worker : BackgroundService
                 {
                     await Task.Delay(timeDistance - DateTime.Now, stoppingToken);
                 }
-                
+
+                // Waiting for Internet Connection
+                while (!await IsInternetAvailableAsync(stoppingToken))
+                {
+                    logger.LogInformation("No connection to the Internet. Waiting 1 minute to try again...");
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                }
+
                 logger.LogInformation("Getting updates...");
                 List<string> outdatedPackages = await winget.GetOutdatedPackagesAsync(stoppingToken);
 
@@ -114,5 +122,20 @@ public class Worker : BackgroundService
         lastUpdate.success = success;
         lastUpdate.dateTime = dateTime;
         lastUpdateRepository.save(lastUpdate);
+    }
+
+    private async Task<bool> IsInternetAvailableAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(5);
+            using var response = await client.GetAsync("http://www.msftconnecttest.com/connecttest.txt", ct);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
