@@ -93,8 +93,11 @@ public class Worker : BackgroundService
                     await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
                 }
 
-                // Saving last update
-                saveLastUpdate(true, DateTime.Now);
+                if (!stoppingToken.IsCancellationRequested)
+                {
+                    // Saving last update only if it wasn't interrupted
+                    saveLastUpdate(true, DateTime.Now);
+                }
 
                 if (!stoppingToken.IsCancellationRequested)
                     logger.LogInformation("Updates applied.");
