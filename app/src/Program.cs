@@ -22,6 +22,7 @@ builder.Services.AddWindowsService(options =>
     options.ServiceName = "WingetAutomaticService";
 });
 
+#pragma warning disable CA1416 // Suppress platform compatibility warning
 if (OperatingSystem.IsWindows())
 {
     builder.Logging.AddEventLog(options =>
@@ -29,6 +30,7 @@ if (OperatingSystem.IsWindows())
         options.SourceName = "WingetAutomatic";
     });
 }
+#pragma warning restore CA1416
 
 builder.Services.AddHostedService<Worker>();
 
