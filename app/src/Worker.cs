@@ -81,7 +81,6 @@ public class Worker : BackgroundService
 
                 // Updating packages
                 lastUpdate!.packages = new List<string>();
-                List<Task> updatePackageTasks = new List<Task>();
                 foreach (string outdatedPackage in outdatedPackages)
                 {
                     // Stopping loop if system is shutting down
@@ -93,19 +92,15 @@ public class Worker : BackgroundService
                     // now, this specific command finishes before we close the application.
                     try
                     {
-                        updatePackageTasks.Add(winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None));
+                        await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+
+                        // Adding package to the list of installed packages
+                        lastUpdate.packages.Add(outdatedPackage);
                     }
                     catch (System.Exception ex)
                     {
                         logger.LogError(ex, "Error applying update.");
                     }
-                }
-
-                // Waiting for all updates to finish
-                for (int i = 0; i < updatePackageTasks.Count; i++)
-                {
-                    await updatePackageTasks[i];
-                    lastUpdate.packages.Add(outdatedPackages[i]);
                 }
 
                 if (!stoppingToken.IsCancellationRequested)
