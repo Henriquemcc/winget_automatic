@@ -97,10 +97,9 @@ public class Worker : BackgroundService
                 {
                     // Saving last update only if it wasn't interrupted
                     saveLastUpdate(true, DateTime.Now);
-                }
 
-                if (!stoppingToken.IsCancellationRequested)
                     logger.LogInformation("Updates applied.");
+                }          
 
                 // Rebooting system if reboot policy is always and updates have been applied
                 if (configuration.rebootPolicy == RebootPolicy.Always && outdatedPackages.Count > 0)
