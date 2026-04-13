@@ -93,14 +93,14 @@ public class Worker : BackgroundService
                     try
                     {
                         await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+
+                        // Adding package to the list of installed packages
+                        lastUpdate.packages.Add(outdatedPackage);
                     }
                     catch (System.Exception ex)
                     {
                         logger.LogError(ex, "Error applying update.");
                     }
-
-                    // Adding package to the list of installed packages
-                    lastUpdate.packages.Add(outdatedPackage);
                 }
 
                 if (!stoppingToken.IsCancellationRequested)
