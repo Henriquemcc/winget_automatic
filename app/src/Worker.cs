@@ -90,7 +90,14 @@ public class Worker : BackgroundService
 
                     // We use CancellationToken.None here so that, if the shutdown starts
                     // now, this specific command finishes before we close the application.
-                    await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+                    try
+                    {
+                        await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        logger.LogError(ex, "Error applying update.");
+                    }
 
                     // Adding package to the list of installed packages
                     lastUpdate.packages.Add(outdatedPackage);
