@@ -81,6 +81,7 @@ public class Worker : BackgroundService
                 }
 
                 // Updating packages
+                lastUpdate!.packages = new List<string>();
                 foreach (string outdatedPackage in outdatedPackages)
                 {
                     // Stopping loop if system is shutting down
@@ -91,6 +92,9 @@ public class Worker : BackgroundService
                     // We use CancellationToken.None here so that, if the shutdown starts
                     // now, this specific command finishes before we close the application.
                     await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+
+                    // Adding package to the list of installed packages
+                    lastUpdate.packages.Add(outdatedPackage);
                 }
 
                 if (!stoppingToken.IsCancellationRequested)
