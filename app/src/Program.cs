@@ -24,8 +24,10 @@ builder.Services.AddWindowsService(options =>
 
 if (OperatingSystem.IsWindows())
 {
-    LoggerProviderOptions.RegisterProviderOptions<
-        EventLogSettings, EventLogLoggerProvider>(builder.Services);
+    builder.Logging.AddEventLog(options =>
+    {
+        options.SourceName = "WingetAutomatic";
+    });
 }
 
 builder.Services.AddHostedService<Worker>();
