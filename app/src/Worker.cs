@@ -39,7 +39,6 @@ public class Worker : BackgroundService
         if (lastUpdate == null)
         {
             this.lastUpdate = new LastUpdate();
-            lastUpdateRepository.save(this.lastUpdate);
         }
         else
         {
