@@ -1,5 +1,6 @@
 namespace WingetAutomatic;
 
+using System.Net.Http;
 using System.Diagnostics;
 using WingetAutomatic.Model;
 using WingetAutomatic.Repository;
@@ -38,7 +39,6 @@ public class Worker : BackgroundService
         if (lastUpdate == null)
         {
             this.lastUpdate = new LastUpdate();
-            lastUpdateRepository.save(this.lastUpdate);
         }
         else
         {
@@ -53,14 +53,25 @@ public class Worker : BackgroundService
             try
             {
                 // Delaying update until it has passed the update time interval
-                DateTime timeDistance = lastUpdate.dateTime + configuration.updateInterval;
-                if (DateTime.Now < timeDistance)
+                if (lastUpdate != null && lastUpdate.dateTime != null && lastUpdate.success == true)
                 {
-                    await Task.Delay(timeDistance - DateTime.Now, stoppingToken);
+                    DateTime timeDistance = (lastUpdate.dateTime ?? DateTime.MinValue) + configuration.updateInterval;
+                    if (DateTime.Now < timeDistance)
+                    {
+                        await Task.Delay(timeDistance - DateTime.Now, stoppingToken);
+                    }
                 }
-                
+
+                // Waiting for Internet Connection
+                while (!await IsInternetAvailableAsync(stoppingToken))
+                {
+                    logger.LogInformation("No connection to the Internet. Waiting 1 minute to try again...");
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                }
+
                 logger.LogInformation("Getting updates...");
                 List<string> outdatedPackages = await winget.GetOutdatedPackagesAsync(stoppingToken);
+                logger.LogInformation("Found {0} outdated packages.", outdatedPackages.Count);
 
                 // Removing ignored packages
                 foreach (string ignoredPackage in configuration.ignoredPackages)
@@ -69,6 +80,7 @@ public class Worker : BackgroundService
                 }
 
                 // Updating packages
+                lastUpdate!.packages = new List<string>();
                 foreach (string outdatedPackage in outdatedPackages)
                 {
                     // Stopping loop if system is shutting down
@@ -78,14 +90,26 @@ public class Worker : BackgroundService
 
                     // We use CancellationToken.None here so that, if the shutdown starts
                     // now, this specific command finishes before we close the application.
-                    await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+                    try
+                    {
+                        await winget.UpdatePackageAsync(outdatedPackage, CancellationToken.None);
+
+                        // Adding package to the list of installed packages
+                        lastUpdate.packages.Add(outdatedPackage);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        logger.LogError(ex, "Error applying update.");
+                    }
                 }
 
-                // Saving last update
-                saveLastUpdate(true, DateTime.Now);
-
                 if (!stoppingToken.IsCancellationRequested)
+                {
+                    // Saving last update only if it wasn't interrupted
+                    saveLastUpdate(true, DateTime.Now);
+
                     logger.LogInformation("Updates applied.");
+                }          
 
                 // Rebooting system if reboot policy is always and updates have been applied
                 if (configuration.rebootPolicy == RebootPolicy.Always && outdatedPackages.Count > 0)
@@ -114,5 +138,20 @@ public class Worker : BackgroundService
         lastUpdate.success = success;
         lastUpdate.dateTime = dateTime;
         lastUpdateRepository.save(lastUpdate);
+    }
+
+    private async Task<bool> IsInternetAvailableAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(5);
+            using var response = await client.GetAsync("http://www.msftconnecttest.com/connecttest.txt", ct);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

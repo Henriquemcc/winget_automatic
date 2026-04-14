@@ -22,11 +22,15 @@ builder.Services.AddWindowsService(options =>
     options.ServiceName = "WingetAutomaticService";
 });
 
+#pragma warning disable CA1416 // Suppress platform compatibility warning
 if (OperatingSystem.IsWindows())
 {
-    LoggerProviderOptions.RegisterProviderOptions<
-        EventLogSettings, EventLogLoggerProvider>(builder.Services);
+    builder.Logging.AddEventLog(options =>
+    {
+        options.SourceName = "WingetAutomatic";
+    });
 }
+#pragma warning restore CA1416
 
 builder.Services.AddHostedService<Worker>();
 
