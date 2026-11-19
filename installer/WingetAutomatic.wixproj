@@ -4,6 +4,6 @@
     <AcceptEula>wix7</AcceptEula>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.UI.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="7.0.1" />
   </ItemGroup>
 </Project>
