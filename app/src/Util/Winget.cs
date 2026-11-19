@@ -99,15 +99,11 @@ public class Winget
         var packageIds = new List<string>();
         if (string.IsNullOrEmpty(wingetPath)) return packageIds;
 
-        StringBuilder args = new StringBuilder();
-        args.Append("upgrade ");
-
+        var args = new StringBuilder("upgrade ");
         if (configuration.downloadProxy != null)
         {
-            args.Append("--proxy ");
-            args.Append(configuration.downloadProxy);
+            args.Append("--proxy ").Append(configuration.downloadProxy).Append(' ');
         }
-
         if (configuration.disableProxy)
         {
             args.Append("--no-proxy ");
@@ -116,32 +112,64 @@ public class Winget
         string output = await RunWingetCommandAsync(args.ToString(), stoppingToken);
 
         string[] lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        string regex = @"[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+";
-        int left = -1;
 
-        foreach (string line in lines)
+        // 1) Acha a linha separadora (uma sequência de '-') e o CABEÇALHO acima dela.
+        //    Isto é independente de idioma e NÃO confunde linhas de dados que contêm "id"
+        //    como substring — caso do código original, onde "IntelliJ IDEA" (IDEA) e
+        //    "NVIDIA ..." (NVIDIA) eram tratados como cabeçalho, descartados, e ainda
+        //    corrompiam a coluna `left` para todas as linhas seguintes.
+        int separatorIdx = -1;
+        for (int i = 0; i < lines.Length; i++)
         {
-            if (line.Contains("ID", StringComparison.OrdinalIgnoreCase))
+            string trimmed = lines[i].Trim();
+            if (trimmed.Length > 0 && trimmed.All(c => c == '-'))
             {
-                left = line.IndexOf("ID", StringComparison.OrdinalIgnoreCase);
+                separatorIdx = i;
+                break;
+            }
+        }
+        if (separatorIdx <= 0) return packageIds;
+
+        string header = lines[separatorIdx - 1];
+        int left = header.IndexOf("ID", StringComparison.Ordinal); // "ID" é o cabeçalho da coluna em qualquer idioma
+        if (left < 0) return packageIds;
+
+        // 2) Token de ID: aceita hífen, '+', '_' e '.'.
+        //    O regex original [a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+ cortava em:
+        //      Adobe.Acrobat.Reader.64-bit -> "Adobe.Acrobat.Reader.64"
+        //      yt-dlp.FFmpeg               -> "dlp.FFmpeg"        (e ainda deslocado)
+        //      RedHat.Podman-Desktop       -> "RedHat.Podman"
+        //      Microsoft.VCRedist.2015+.x64-> "Microsoft.VCRedist.2015"
+        var idTokenRegex = new Regex(@"^[A-Za-z0-9][A-Za-z0-9.\-+_]*$");
+
+        for (int i = separatorIdx + 1; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            // Fim da tabela: linha de resumo ("40 atualizações disponíveis.") ou o
+            // bloco "exige segmentação explícita" (Discord). Nesses casos o token na
+            // coluna do ID não casa o padrão -> paramos de ler esta tabela.
+            if (left >= line.Length) break;
+
+            string rest = line.Substring(left).TrimStart();
+            int space = rest.IndexOfAny(new[] { ' ', '\t' });
+            string token = space < 0 ? rest : rest.Substring(0, space);
+
+            if (!token.Contains('.') || !idTokenRegex.IsMatch(token))
+                break; // não é mais uma linha de dados da tabela principal
+
+            // 3) IDs truncados pelo winget com "…" (U+2026). O texto não contém o Id
+            //    completo, então NÃO há como recuperá-lo por parse. Pular evita gerar
+            //    comandos "winget upgrade <id-incompleto>" que sempre falhariam.
+            //    Para obter estes pacotes corretamente use a API COM (abaixo).
+            if (token.EndsWith('…'))
+            {
+                // TODO(registrar): logar token truncado para diagnóstico.
                 continue;
             }
 
-            if (left <= 0 || line.StartsWith('-') || string.IsNullOrWhiteSpace(line))
-            {
-                continue;
-            }
-
-            if (left < line.Length)
-            {
-                string lineSubstring = line.Substring(left);
-                Match match = Regex.Match(lineSubstring, regex);
-                if (match.Success)
-                {
-                    string packageId = match.Value;
-                    packageIds.Add(packageId);
-                }
-            }
+            packageIds.Add(token);
         }
 
         return packageIds;
