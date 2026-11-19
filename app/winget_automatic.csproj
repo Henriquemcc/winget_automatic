@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-winget_automatic-99de46d3-83e4-4863-a565-b03e7900cbfe</UserSecretsId>
+    <MicrosoftManagementDeployment-Platform>x64</MicrosoftManagementDeployment-Platform>
   </PropertyGroup>
 
   <ItemGroup>
