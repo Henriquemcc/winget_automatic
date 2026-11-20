@@ -15,7 +15,6 @@
 
     <Feature Id="Main">
       <ComponentRef Id="ServiceComponent_x64" />
-      <ComponentRef Id="ServiceComponent_x86" />
     </Feature>
   </Package>
 
@@ -31,13 +30,6 @@
       <File Id="ServiceExecutable_x64" Source="installer-stage\winget_automatic_x64.exe" Name="winget_automatic_x64.exe" KeyPath="yes" />
       <ServiceInstall Id="ServiceInstaller_x64" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically installs program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
       <ServiceControl Id="ServiceControl_x64" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
-    </Component>
-
-    <!-- Component for the 32-bit service executable. Installs only on 32-bit Windows. -->
-    <Component Id="ServiceComponent_x86" Directory="INSTALLFOLDER" Condition="NOT VersionNT64" Guid="*">
-      <File Id="ServiceExecutable_x86" Source="installer-stage\winget_automatic_x86.exe" Name="winget_automatic_x86.exe" KeyPath="yes" />
-      <ServiceInstall Id="ServiceInstaller_x86" Name="WingetAutomaticService" DisplayName="Winget Automatic" Description="Automatically installs program updates using Winget." Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" />
-      <ServiceControl Id="ServiceControl_x86" Name="WingetAutomaticService" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
     </Component>
   </Fragment>
 </Wix>
