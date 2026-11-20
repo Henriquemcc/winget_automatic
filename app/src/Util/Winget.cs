@@ -97,84 +97,99 @@ public class Winget
     // Obtains outdated packages using WinGet
     public async Task<List<string>> GetOutdatedPackagesAsync(CancellationToken stoppingToken)
     {
-        // Lista de pacotes desatualizados
-        var outdatedPackages = new List<string>();
+        var tcs = new TaskCompletionSource<List<string>>();
 
-        try
+        // O WinGet exige o modelo STA. Serviços rodam em MTA, logo criamos uma thread dedicada.
+        var staThread = new Thread(() =>
         {
-            // Inicializando o PackageManager do WinGet
-            var packageManager = new PackageManager();
-
-            // Obtendo os catálogos de pacotes disponíveis
-            var remoteCatalogs = packageManager.GetPackageCatalogs();
-
-            // Criando um catálogo composto para correlacionar os pacotes locais com as fontes remotas
-            var compositeOptions = new CreateCompositePackageCatalogOptions
+            try
             {
-                CompositeSearchBehavior = CompositeSearchBehavior.LocalCatalogs
-            };
+                // Lista de pacotes desatualizados
+                var outdatedPackages = new List<string>();
 
-            // Adicionando o catálogo local de instalados
-            var localCatalogRef = packageManager.GetLocalPackageCatalog(LocalPackageCatalog.InstalledPackages);
-            compositeOptions.Catalogs.Add(localCatalogRef);
+                // Inicializando o PackageManager do WinGet
+                var packageManager = new PackageManager();
 
-            // Adicionando os catálogos remotos disponíveis para cruzar os dados de versão
-            foreach (var catalogRef in remoteCatalogs)
-            {
-                compositeOptions.Catalogs.Add(catalogRef);
-            }
+                // Obtendo os catálogos de pacotes disponíveis
+                var remoteCatalogs = packageManager.GetPackageCatalogs();
 
-            // Conectando ao catálogo composto
-            var compositeCatalogRef = packageManager.CreateCompositePackageCatalog(compositeOptions);
-            var connectResult = await Task.Run(() => compositeCatalogRef.Connect(), stoppingToken);
+                // Criando um catálogo composto para correlacionar os pacotes locais com as fontes remotas
+                var compositeOptions = new CreateCompositePackageCatalogOptions
+                {
+                    CompositeSearchBehavior = CompositeSearchBehavior.LocalCatalogs
+                };
 
-            if (connectResult.Status != ConnectResultStatus.Ok || connectResult.PackageCatalog == null)
-            {
-                throw new InvalidOperationException($"Falha ao conectar ao catálogo do WinGet: {connectResult.Status}.");
-            }
+                // Adicionando o catálogo local de instalados
+                var localCatalogRef = packageManager.GetLocalPackageCatalog(LocalPackageCatalog.InstalledPackages);
+                compositeOptions.Catalogs.Add(localCatalogRef);
 
-            var catalog = connectResult.PackageCatalog;
+                // Adicionando os catálogos remotos disponíveis para cruzar os dados de versão
+                foreach (var catalogRef in remoteCatalogs)
+                {
+                    compositeOptions.Catalogs.Add(catalogRef);
+                }
 
-            // Configurando as opções de busca para varrer os pacotes
-            var findOptions = new FindPackagesOptions();
+                // Conectando ao catálogo composto
+                var compositeCatalogRef = packageManager.CreateCompositePackageCatalog(compositeOptions);
+                var connectResult = compositeCatalogRef.Connect();
 
-            var filter = new PackageMatchFilter
-            {
-                Field = PackageMatchField.Id,
-                Option = PackageFieldMatchOption.ContainsCaseInsensitive,
-                Value = string.Empty // Traz todos os pacotes para validação de atualização
-            };
-            findOptions.Filters.Add(filter);
+                if (connectResult.Status != ConnectResultStatus.Ok || connectResult.PackageCatalog == null)
+                {
+                    throw new InvalidOperationException($"Falha ao conectar ao catálogo do WinGet: {connectResult.Status}.");
+                }
 
-            stoppingToken.ThrowIfCancellationRequested();
+                var catalog = connectResult.PackageCatalog;
 
-            // Executando a busca assíncrona
-            var findResult = await Task.Run(() => catalog.FindPackages(findOptions), stoppingToken);
+                // Configurando as opções de busca para varrer os pacotes
+                var findOptions = new FindPackagesOptions();
 
-            if (findResult.Status != FindPackagesResultStatus.Ok)
-            {
-                return outdatedPackages; // Retorna lista vazia em caso de falha na busca
-            }
+                var filter = new PackageMatchFilter
+                {
+                    Field = PackageMatchField.Id,
+                    Option = PackageFieldMatchOption.ContainsCaseInsensitive,
+                    Value = string.Empty // Traz todos os pacotes para validação de atualização
+                };
+                findOptions.Filters.Add(filter);
 
-            // Filtrando os pacotes que possuem uma versão disponível para atualização
-            foreach (var match in findResult.Matches)
-            {
                 stoppingToken.ThrowIfCancellationRequested();
 
-                var package = match.CatalogPackage;
+                // Executando a busca
+                var findResult = catalog.FindPackages(findOptions);
 
-                if (package.InstalledVersion is not null && package.IsUpdateAvailable)
+                if (findResult.Status == FindPackagesResultStatus.Ok && findResult.Matches != null)
                 {
-                    outdatedPackages.Add(package.Id);
+                    // Filtrando os pacotes que possuem uma versão disponível para atualização
+                    foreach (var match in findResult.Matches)
+                    {
+                        stoppingToken.ThrowIfCancellationRequested();
+
+                        var package = match.CatalogPackage;
+
+                        if (package.InstalledVersion is not null && package.IsUpdateAvailable)
+                        {
+                            outdatedPackages.Add(package.Id);
+                        }
+                    }
+
+                    tcs.SetResult(outdatedPackages);
                 }
             }
-        }
-        catch (System.Exception ex)
-        {
-            logger.LogError($"Erro ao obter pacotes desatualizados via Winget: {ex.Message}");
-        }
 
-        return outdatedPackages;
+            catch (OperationCanceledException)
+            {
+                tcs.SetCanceled();
+            }
+            catch (System.Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        });
+
+        // Configura a thread como STA antes de iniciar
+        staThread.SetApartmentState(ApartmentState.STA);
+        staThread.Start();
+
+        return await tcs.Task;
     }
 
     public async Task UpdatePackageAsync(string packageName, CancellationToken stoppingToken)
